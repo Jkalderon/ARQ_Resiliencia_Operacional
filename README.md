@@ -1,2 +1,2 @@
-# ARQ_Resiliencia_Operacional
+# Arquitectura de Resiliencia Operacional
 Material didactivo relacionado a la Resiliencia Operacional
