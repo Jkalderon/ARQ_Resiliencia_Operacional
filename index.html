@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seminario de Resiliencia Operacional</title>
+
+    <link rel="icon" type="image/svg+xml" href="https://api.iconify.design/lucide:graduation-cap.svg?color=%2310b981">
+
+    <!-- Tailwind CSS para estilos rápidos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Estilos suaves para la transición de enlaces */
+        .link-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .link-item:hover {
+            transform: translateX(5px);
+            color: #2563eb; /* Azul */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans flex flex-col min-h-screen">
+
+    <!-- =========================================
+         SECCIÓN 1: ENCABEZADO (HEADER)
+         Editar Título y Objetivo aquí abajo
+         ========================================= -->
+    <header class="bg-slate-900 text-white py-12 px-6 shadow-lg">
+        <div class="max-w-5xl mx-auto text-center">
+            
+            <!-- 1. TÍTULO DEL SEMINARIO -->
+            <!-- EDITA EL TEXTO DENTRO DE LAS ETIQUETAS <h1> -->
+            <h1 class="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
+                Arquitectura de Resiliencia Operacional
+            </h1>
+
+            <!-- 2. OBJETIVO DEL SEMINARIO -->
+            <!-- EDITA EL TEXTO DENTRO DE LAS ETIQUETAS <p> -->
+            <p class="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+                Repositorio de recursos a utilizar en el semiario de Arquitectura de Resiliencia Operacional, incluyendo dinámicas prácticas y materiales de apoyo.
+            </p>
+
+        </div>
+    </header>
+
+    <!-- =========================================
+         SECCIÓN 2: CONTENIDO PRINCIPAL
+         Bloques de Dinámicas y Recursos
+         ========================================= -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+
+            <!-- BLOQUE A: CARPETA DINÁMICAS -->
+            <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <div class="p-6 border-b border-slate-100 bg-blue-50">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i data-lucide="users" class="text-blue-600 w-6 h-6"></i>
+                        <h2 class="text-2xl font-bold text-slate-800">Dinámicas</h2>
+                    </div>
+                    <p class="text-sm text-slate-600">Actividades prácticas y ejercicios grupales.</p>
+                </div>
+                
+                <div class="p-6">
+                    <!-- LISTA DE ENLACES A DINÁMICAS -->
+                    <ul class="space-y-4">
+                        
+                        <!-- PLANTILLA DE ENLACE (COPIAR Y PEGAR ESTE BLOQUE LI PARA AGREGAR MÁS) -->
+                        <li class="link-item">
+                            <!-- 
+                                IMPORTANTE: En el 'href', pon la ruta relativa. 
+                                Ejemplo: href="./Dinamicas/nombre-de-tu-archivo.html" 
+                            -->
+                            <a href="Dinamicas/Clase 01 D1- Identificar servicios criticos y amenazas.html" class="flex items-center gap-3 group p-2 rounded hover:bg-blue-50 block">
+                                <i data-lucide="play-circle" class="w-5 h-5 text-slate-400 group-hover:text-blue-500"></i>
+                                <span class="font-medium">Dinámica 01 - Identificar servicios criticos y amenazas</span>
+                            </a>
+                        </li>
+
+                        <li class="link-item">
+                            <a href="Dinamicas/Clase 01 D2- Definir Tiempos de recuperación.html" class="flex items-center gap-3 group p-2 rounded hover:bg-blue-50 block">
+                                <i data-lucide="play-circle" class="w-5 h-5 text-slate-400 group-hover:text-blue-500"></i>
+                                <span class="font-medium">Dinámica 2: Definir Tiempos de recuperación</span>
+                            </a>
+                        </li>
+
+                        <li class="link-item">
+                            <a href="Dinamicas/Clase 02 D1-Analizar la cadena de suministros y SLA.html" class="flex items-center gap-3 group p-2 rounded hover:bg-blue-50 block">
+                                <i data-lucide="play-circle" class="w-5 h-5 text-slate-400 group-hover:text-blue-500"></i>
+                                <span class="font-medium">Dinámica 3: Analizar la cadena de suministros y SLA</span>
+                            </a>
+                        </li>
+
+                        <li class="link-item">
+                            <a href="Dinamicas/Clase 03 D1-Identificar Partes interesadas e incidentes.html" class="flex items-center gap-3 group p-2 rounded hover:bg-blue-50 block">
+                                <i data-lucide="play-circle" class="w-5 h-5 text-slate-400 group-hover:text-blue-500"></i>
+                                <span class="font-medium">Dinámica 4: Identificar Partes interesadas e incidentes</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+
+            <!-- BLOQUE B: CARPETA RECURSOS -->
+            <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <div class="p-6 border-b border-slate-100 bg-emerald-50">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i data-lucide="folder-open" class="text-emerald-600 w-6 h-6"></i>
+                        <h2 class="text-2xl font-bold text-slate-800">Recursos</h2>
+                    </div>
+                    <p class="text-sm text-slate-600">Lecturas, diapositivas y documentación.</p>
+                </div>
+
+                <div class="p-6">
+                    <!-- LISTA DE ENLACES A RECURSOS -->
+                    <ul class="space-y-4">
+
+                        <!-- PLANTILLA DE ENLACE (COPIAR Y PEGAR ESTE BLOQUE LI PARA AGREGAR MÁS) -->
+                        <li class="link-item">
+                            <!-- 
+                                IMPORTANTE: En el 'href', pon la ruta relativa.
+                                Ejemplo: href="./Recursos/mi-presentacion.pdf"
+                            -->
+                            <a href="Recursos/Presentaciones/" target="_blank" class="flex items-center gap-3 group p-2 rounded hover:bg-emerald-50 block">
+                                <i data-lucide="presentation" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500"></i>
+                                <span class="font-medium">Repasa: Presentaciones utilizadas en el seminario</span>
+                            </a>
+                        </li>
+
+                        <li class="link-item">
+                            <a href="Recursos/Documentos/" target="_blank" class="flex items-center gap-3 group p-2 rounded hover:bg-emerald-50 block">
+                                <i data-lucide="book-open" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500"></i>
+                                <span class="font-medium">Lee: Documentos asociados al tema</span>
+                            </a>
+                        </li>
+
+                        <li class="link-item">
+                            <a href="Recursos/Audios y videos/" target="_blank" class="flex items-center gap-3 group p-2 rounded hover:bg-emerald-50 block">
+                                <i data-lucide="video" class="w-5 h-5 text-slate-400 group-hover:text-emerald-500"></i>
+                                <span class="font-medium">Escucha: Audios y videos relacionados</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- =========================================
+         PIE DE PÁGINA (FOOTER)
+         ========================================= -->
+    <footer class="bg-slate-100 border-t border-slate-200 py-8 text-center text-slate-500 text-sm">
+        <a>Seminario Arquitectura de Resiliencia Operacional 2025 | Material didáctivo</a><br>
+        <a href= "https://www.linkedin.com/in/julio-calder%C3%B3n-aguilar-5415b942">
+        <span class="font-medium">Julio Calderón Aguilar | 2025© </span>
+        </a>
+    </footer>
+    <!-- Script para renderizar los iconos -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
