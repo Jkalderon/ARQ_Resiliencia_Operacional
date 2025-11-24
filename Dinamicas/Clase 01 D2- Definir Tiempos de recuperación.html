@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo Educativo BCM - ISO 22301</title>
+    
+    <!-- 1. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <!-- 3. Prop-types -->
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    
+    <!-- 4. Recharts -->
+    <script src="https://unpkg.com/recharts@2.12.0/umd/Recharts.js"></script>
+    
+    <!-- 5. Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #root:empty { display: none; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-100">
+    
+    <div id="root" class="flex justify-center items-center min-h-screen">
+        <div class="text-blue-600 text-xl animate-pulse font-semibold">Cargando Modelo Educativo BCM...</div>
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const Recharts = window.Recharts;
+        const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } = Recharts;
+
+        // --- ICONOS SVG ---
+        const IconBase = ({ children, color = "currentColor", size = 24, ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>{children}</svg>
+        );
+
+        const Activity = (props) => <IconBase {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></IconBase>;
+        const AlertTriangle = (props) => <IconBase {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></IconBase>;
+        const BarChart2 = (props) => <IconBase {...props}><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></IconBase>;
+        const Clock = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></IconBase>;
+        const Database = (props) => <IconBase {...props}><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" /></IconBase>;
+        const DollarSign = (props) => <IconBase {...props}><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></IconBase>;
+        const FileText = (props) => <IconBase {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></IconBase>;
+        const Info = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></IconBase>;
+        const Scale = (props) => <IconBase {...props}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z" /><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z" /><path d="M7 21h10" /><path d="M12 3v18" /><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" /></IconBase>;
+        const ShieldAlert = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></IconBase>;
+        const TrendingUp = (props) => <IconBase {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></IconBase>;
+        const Users = (props) => <IconBase {...props}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></IconBase>;
+
+        // --- Componente Principal ---
+        const BcmEducationTool = () => {
+            // Estado para los parámetros BIA
+            const [serviceName, setServiceName] = useState('Servicio de Banca en Línea');
+            
+            const [rto, setRto] = useState(4); // RTO en Horas
+            
+            // Estados separados para RPO: Valor y Unidad
+            const [rpoValue, setRpoValue] = useState(1); 
+            const [rpoUnit, setRpoUnit] = useState('hours'); // 'hours' | 'minutes'
+
+            const [mtpd, setMtpd] = useState(24); // MTPD en Horas
+            const [mbco, setMbco] = useState(60); // MBCO en %
+
+            // Estado para el Escenario de Interrupción
+            const [scenario, setScenario] = useState({
+                title: 'Ataque de Ransomware',
+                cause: 'Un empleado abrió un correo de phishing que encriptó la base de datos principal.',
+                impactFinancial: 'Pérdida de transacciones por $50k/hora. Costos de recuperación forense.',
+                impactLegal: 'Posibles multas por incumplimiento de SLA con clientes corporativos. Reporte obligatorio al regulador.',
+                impactReputation: 'Pérdida de confianza de los usuarios en redes sociales. Noticias negativas en prensa.',
+                impactOperational: 'El equipo de atención al cliente está saturado. Los procesos de conciliación manual son lentos.',
+            });
+
+            const [activeTab, setActiveTab] = useState('definition'); 
+            const [warning, setWarning] = useState('');
+
+            // Validación lógica de BCM
+            useEffect(() => {
+                if (parseFloat(rto) > parseFloat(mtpd)) {
+                    setWarning('¡Cuidado! El RTO (Tiempo objetivo de recuperación) no puede ser mayor que el MTPD (Tiempo máximo tolerable). Si tardas más en recuperarte de lo que el negocio tolera, la supervivencia está en riesgo.');
+                } else {
+                    setWarning('');
+                }
+            }, [rto, mtpd]);
+
+            // Generación de datos para la gráfica
+            const generateGraphData = () => {
+                const data = [];
+                const rtoVal = parseFloat(rto);
+                const mtpdVal = parseFloat(mtpd);
+                const mbcoVal = parseFloat(mbco);
+                const maxTime = mtpdVal * 1.1; 
+                
+                // Fase 1: Operación Normal
+                data.push({ time: -1, capacity: 100, label: 'Operación Normal', phase: 'Normal' });
+                data.push({ time: 0, capacity: 100, label: 'Incidente', phase: 'Normal' });
+                
+                // Fase 2: Caída por el evento
+                data.push({ time: 0.1, capacity: 20, label: 'Impacto Inicial (20%)', phase: 'Caída' });
+
+                // Fase 3: Recuperación hasta RTO
+                const midRto = rtoVal / 2;
+                if (midRto > 0.1) {
+                    data.push({ 
+                        time: midRto, 
+                        capacity: 20 + ((mbcoVal - 20) / 2), 
+                        label: 'Recuperando...', 
+                        phase: 'Recuperación' 
+                    });
+                }
+
+                data.push({ time: rtoVal, capacity: mbcoVal, label: `RTO alcanzado (${mbcoVal}%)`, phase: 'Estabilización' });
+
+                // Fase 4: Retorno a la normalidad hasta MTPD
+                if (mtpdVal > rtoVal) {
+                    const midRecovery = rtoVal + ((mtpdVal - rtoVal) / 2);
+                    data.push({ 
+                        time: midRecovery, 
+                        capacity: mbcoVal + ((100 - mbcoVal) / 2), 
+                        label: 'Retorno Gradual', 
+                        phase: 'Retorno' 
+                    });
+                }
+
+                // Punto final: Recuperación total
+                data.push({ time: mtpdVal, capacity: 100, label: 'Recuperación Total', phase: 'Normalidad' });
+
+                // Extensión visual
+                data.push({ time: maxTime, capacity: 100, label: '', phase: 'Normalidad' });
+
+                return data;
+            };
+
+            const graphData = generateGraphData();
+
+            // Tooltip personalizado para la gráfica
+            const CustomTooltip = ({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                return (
+                    <div className="bg-white p-3 border border-gray-200 shadow-lg rounded text-sm">
+                    <p className="font-bold text-blue-900">Tiempo: {label > 0 ? `${Number(label).toFixed(1)}h` : 'Inicio'}</p>
+                    <p className="text-blue-600">Nivel de Servicio: <span className="font-bold">{Number(payload[0].value).toFixed(0)}%</span></p>
+                    <p className="text-gray-500 text-xs italic">{payload[0].payload.label}</p>
+                    </div>
+                );
+                }
+                return null;
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 p-4 font-sans text-gray-800">
+                <div className="max-w-6xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden">
+                    
+                    {/* Header */}
+                    <header className="bg-blue-900 text-white p-6">
+                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                        <Activity className="text-green-400" />
+                        Modelo Educativo: Definición de tiempos de recuperación para la Continuidad del Negocio
+                    </h1>
+                    <p className="text-blue-200 mt-2">
+                        Herramienta interactiva para definir tiempos, impactos y visualizar la recuperación basada en ISO 22301.
+                    </p>
+                    </header>
+
+                    {/* Navegación */}
+                    <div className="flex border-b border-gray-200">
+                    <button 
+                        onClick={() => setActiveTab('definition')}
+                        className={`flex-1 py-4 text-center font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'definition' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}`}
+                    >
+                        <FileText size={20} />
+                        1. Definición de Tiempos e Impactos
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('visualization')}
+                        className={`flex-1 py-4 text-center font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'visualization' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:bg-gray-50'}`}
+                    >
+                        <BarChart2 size={20} />
+                        2. Gráfica de Recuperación
+                    </button>
+                    </div>
+
+                    {/* Contenido Principal */}
+                    <div className="p-6">
+                    
+                    {/* PESTAÑA 1: DEFINICIÓN DE TIEMPOS E IMPACTOS */}
+                    {activeTab === 'definition' && (
+                        <div className="space-y-8 fade-in">
+                        
+                        {/* Sección A: Parámetros */}
+                        <section>
+                            <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2 border-gray-200">A. Parámetros de Continuidad</h2>
+                            
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-6 shadow-sm">
+                            <label className="block text-sm font-bold text-blue-900 mb-1">Nombre del Servicio Crítico</label>
+                            <input 
+                                type="text" 
+                                value={serviceName} 
+                                onChange={(e) => setServiceName(e.target.value)}
+                                className="w-full p-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* RTO */}
+                            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-2 mb-2">
+                                <Clock className="text-orange-500" />
+                                <h3 className="font-bold text-lg">RTO (Tiempo Objetivo de Recuperación)</h3>
+                                </div>
+                                <p className="text-xs text-gray-500 mb-4 italic">
+                                El tiempo meta para reanudar la entrega del producto o servicio después de un incidente.
+                                </p>
+                                <label className="block text-sm font-medium mb-1">Horas para recuperar:</label>
+                                <input 
+                                type="number" 
+                                value={rto} 
+                                onChange={(e) => setRto(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-200 outline-none"
+                                />
+                            </div>
+
+                            {/* RPO - Selector de Unidades */}
+                            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-2 mb-2">
+                                <Database className="text-purple-500" />
+                                <h3 className="font-bold text-lg">RPO (Punto Objetivo de Recuperación)</h3>
+                                </div>
+                                <p className="text-xs text-gray-500 mb-4 italic">
+                                Máxima pérdida de datos aceptable. ¿Cuántos datos estamos dispuestos a perder?
+                                </p>
+                                <label className="block text-sm font-medium mb-1">Pérdida de datos aceptable:</label>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="number" 
+                                        value={rpoValue} 
+                                        onChange={(e) => setRpoValue(e.target.value)}
+                                        className="w-2/3 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-200 outline-none"
+                                        min="0"
+                                    />
+                                    <select 
+                                        value={rpoUnit}
+                                        onChange={(e) => setRpoUnit(e.target.value)}
+                                        className="w-1/3 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-200 outline-none bg-gray-50 text-sm"
+                                    >
+                                        <option value="hours">Horas</option>
+                                        <option value="minutes">Minutos</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* MTPD */}
+                            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-2 mb-2">
+                                <AlertTriangle className="text-red-500" />
+                                <h3 className="font-bold text-lg">MTPD (Período Máximo Tolerable)</h3>
+                                </div>
+                                <p className="text-xs text-gray-500 mb-4 italic">
+                                Tiempo máximo que la organización puede tolerar la interrupción antes de daño irreparable.
+                                </p>
+                                <label className="block text-sm font-medium mb-1">Límite máximo en horas:</label>
+                                <input 
+                                type="number" 
+                                value={mtpd} 
+                                onChange={(e) => setMtpd(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-200 outline-none"
+                                />
+                            </div>
+
+                            {/* MBCO */}
+                            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-2 mb-2">
+                                <TrendingUp className="text-green-500" />
+                                <h3 className="font-bold text-lg">MBCO (Objetivo Mínimo)</h3>
+                                </div>
+                                <p className="text-xs text-gray-500 mb-4 italic">
+                                El nivel mínimo de servicio aceptable para operar durante la contingencia.
+                                </p>
+                                <label className="block text-sm font-medium mb-1">Capacidad mínima operativa (%):</label>
+                                <input 
+                                type="number" 
+                                value={mbco} 
+                                onChange={(e) => setMbco(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-200 outline-none"
+                                />
+                            </div>
+                            </div>
+
+                            {warning && (
+                            <div className="bg-red-50 border-l-4 border-red-500 p-4 mt-4 flex items-start gap-3 rounded-r shadow-sm">
+                                <ShieldAlert className="text-red-500 flex-shrink-0" />
+                                <p className="text-red-700 text-sm font-bold">{warning}</p>
+                            </div>
+                            )}
+                        </section>
+
+                        {/* Sección B: Escenario de Impacto */}
+                        <section className="mt-10 pt-6 border-t-2 border-gray-100">
+                            <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2 border-gray-200 flex items-center gap-2">
+                            <FileText className="text-blue-600" />
+                            B. Registro de Escenario de Interrupción
+                            </h2>
+
+                            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-6 shadow-sm">
+                            <p className="text-sm text-yellow-800 flex gap-2 items-start">
+                                <Info className="flex-shrink-0 mt-0.5"/>
+                                <span>
+                                <strong>Contexto del BIA:</strong> Utilice esta sección para documentar qué sucedería si los tiempos definidos arriba no se cumplen. 
+                                Analice las consecuencias cualitativas y cuantitativas para justificar la inversión en continuidad.
+                                </span>
+                            </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 mb-6">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Título del Escenario</label>
+                                <input 
+                                type="text" 
+                                value={scenario.title} 
+                                onChange={(e) => setScenario({...scenario, title: e.target.value})}
+                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none"
+                                placeholder="Ej: Inundación del Centro de Datos"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Causa Raíz y Descripción</label>
+                                <textarea 
+                                value={scenario.cause} 
+                                onChange={(e) => setScenario({...scenario, cause: e.target.value})}
+                                className="w-full p-2 border border-gray-300 rounded h-20 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none resize-y"
+                                placeholder="Descripción del incidente..."
+                                />
+                            </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-4 rounded border border-gray-200 shadow-sm">
+                                <div className="flex items-center gap-2 mb-2 text-green-700 border-b border-green-100 pb-2">
+                                <DollarSign size={20} />
+                                <h4 className="font-bold">Impacto Financiero</h4>
+                                </div>
+                                <textarea 
+                                value={scenario.impactFinancial} 
+                                onChange={(e) => setScenario({...scenario, impactFinancial: e.target.value})}
+                                className="w-full p-2 border border-gray-300 rounded h-24 text-sm resize-none focus:border-green-400 focus:ring-2 focus:ring-green-100 outline-none"
+                                placeholder="Pérdida de ingresos, multas, costos extra..."
+                                />
+                            </div>
+
+                            <div className="bg-white p-4 rounded border border-gray-200 shadow-sm">
+                                <div className="flex items-center gap-2 mb-2 text-blue-700 border-b border-blue-100 pb-2">
+                                <Scale size={20} />
+                                <h4 className="font-bold">Impacto Legal / Regulatorio</h4>
+                                </div>
+                                <textarea 
+                                value={scenario.impactLegal} 
+                                onChange={(e) => setScenario({...scenario, impactLegal: e.target.value})}
+                                className="w-full p-2 border border-gray-300 rounded h-24 text-sm resize-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
+                                placeholder="Incumplimiento de contratos, sanciones regulatorias..."
+                                />
+                            </div>
+
+                            <div className="bg-white p-4 rounded border border-gray-200 shadow-sm">
+                                <div className="flex items-center gap-2 mb-2 text-purple-700 border-b border-purple-100 pb-2">
+                                <Users size={20} />
+                                <h4 className="font-bold">Impacto Reputacional</h4>
+                                </div>
+                                <textarea 
+                                value={scenario.impactReputation} 
+                                onChange={(e) => setScenario({...scenario, impactReputation: e.target.value})}
+                                className="w-full p-2 border border-gray-300 rounded h-24 text-sm resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none"
+                                placeholder="Pérdida de clientes, imagen de marca negativa..."
+                                />
+                            </div>
+
+                            <div className="bg-white p-4 rounded border border-gray-200 shadow-sm">
+                                <div className="flex items-center gap-2 mb-2 text-orange-700 border-b border-orange-100 pb-2">
+                                <Activity size={20} />
+                                <h4 className="font-bold">Impacto Operacional</h4>
+                                </div>
+                                <textarea 
+                                value={scenario.impactOperational} 
+                                onChange={(e) => setScenario({...scenario, impactOperational: e.target.value})}
+                                className="w-full p-2 border border-gray-300 rounded h-24 text-sm resize-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none"
+                                placeholder="Acumulación de trabajo, pérdida de productividad..."
+                                />
+                            </div>
+                            </div>
+                        </section>
+                        </div>
+                    )}
+
+                    {/* PESTAÑA 2: VISUALIZACIÓN */}
+                    {activeTab === 'visualization' && (
+                        /* INCREMENTO DE ALTURA AQUI: h-[600px] para mayor espacio */
+                        <div className="h-[600px] w-full fade-in flex flex-col">
+                        <div className="mb-4 bg-gray-100 p-4 rounded text-sm text-gray-700 border border-gray-200 flex-shrink-0">
+                            <p><strong>Análisis Gráfico:</strong> Esta curva muestra la capacidad operativa a lo largo del tiempo.</p>
+                            <ul className="list-disc ml-5 mt-2 space-y-1">
+                            <li><strong>Operación Normal (100%):</strong> Antes del incidente.</li>
+                            <li><strong>Impacto (20%):</strong> Caída inmediata al momento del evento (Hora 0).</li>
+                            <li><strong>RTO ({rto}h):</strong> Tiempo objetivo para alcanzar el nivel mínimo aceptable ({mbco}%).</li>
+                            <li><strong>MTPD ({mtpd}h):</strong> Recuperación total (100%) antes de que el impacto sea intolerable.</li>
+                            </ul>
+                        </div>
+                        
+                        <div className="flex-grow min-h-0">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={graphData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorCapacity" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <XAxis 
+                                    dataKey="time" 
+                                    label={{ value: 'Tiempo (Horas)', position: 'insideBottomRight', offset: -5 }} 
+                                    type="number"
+                                    domain={[-1, 'dataMax']}
+                                    ticks={[0, parseFloat(rto), parseFloat(mtpd)]}
+                                />
+                                {/* MODIFICADO: Eje Y forzado de 0 a 100 */}
+                                <YAxis 
+                                    label={{ value: 'Capacidad Operativa (%)', angle: -90, position: 'insideLeft' }} 
+                                    domain={[0, 100]}
+                                    ticks={[0, 20, 40, 60, 80, 100]}
+                                />
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Legend />
+                                
+                                {/* Líneas de Referencia */}
+                                <ReferenceLine x={mtpd} stroke="red" strokeDasharray="3 3" label={{ value: 'MTPD', position: 'top', fill: 'red', fontSize: 12 }} />
+                                <ReferenceLine x={rto} stroke="green" strokeDasharray="3 3" label={{ value: 'RTO', position: 'top', fill: 'green', fontSize: 12 }} />
+                                <ReferenceLine y={mbco} stroke="orange" strokeDasharray="3 3" label={{ value: `MBCO (${mbco}%)`, position: 'right', fill: 'orange', fontSize: 12 }} />
+
+                                <Area type="monotone" dataKey="capacity" stroke="#3B82F6" fillOpacity={1} fill="url(#colorCapacity)" name="Nivel de Servicio" strokeWidth={2} animationDuration={1500} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                        </div>
+                    )}
+                    </div>
+
+                    <div className="bg-gray-50 p-6 border-t border-gray-200 flex justify-between items-center">
+                    <div className="text-sm text-gray-600">
+                        <span className="font-bold block text-gray-800">Resumen del Modelo:</span>
+                        Servicio: {serviceName} | RTO: {rto}h | MTPD: {mtpd}h
+                    </div>
+                    </div>
+
+                </div>
+                </div>
+            );
+        };
+
+        const rootElement = document.getElementById('root');
+        const root = ReactDOM.createRoot(rootElement);
+        root.render(<BcmEducationTool />);
+    </script>
+</body>
+<footer>
+    <h2 style="text-align: center; color: #555555; font-weight: bold;">
+    Material con fines didácticos elaborado por Julio Calderón. Derechos reservados 2025
+</h2>
+</footer>
+</html>

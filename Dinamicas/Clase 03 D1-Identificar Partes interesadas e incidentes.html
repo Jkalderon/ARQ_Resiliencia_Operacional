@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Respuesta a Incidentes</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Import Map para manejar dependencias como módulos ES -->
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@18.2.0",
+                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+                "lucide-react": "https://esm.sh/lucide-react@0.263.1"
+            }
+        }
+    </script>
+    
+    <!-- Babel para compilar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { AlertTriangle, Users, Shield, Clock, FileText, CheckSquare, Move, Save, Trash2, Megaphone, PlayCircle, Plus, Activity, Layout, X, List, Zap } from 'lucide-react';
+
+        // --- DATOS INICIALES BASADOS EN INVESTIGACIÓN ---
+
+        const INCIDENT_TYPES = [
+            { id: 'cyber', title: 'Ciberataque / Fallo TI', color: 'bg-red-50 border-red-200' },
+            { id: 'natural', title: 'Desastre Natural', color: 'bg-blue-50 border-blue-200' },
+            { id: 'fire', title: 'Incendio / Explosión', color: 'bg-orange-50 border-orange-200' },
+            { id: 'supply', title: 'Fallo Cadena Suministro', color: 'bg-white border-gray-200' },
+            { id: 'reputation', title: 'Crisis Reputacional', color: 'bg-purple-50 border-purple-200' }
+        ];
+
+        const STAKEHOLDER_DEFINITIONS = [
+            { id: 'stk1', name: 'Empleados y Sindicatos' },
+            { id: 'stk2', name: 'Clientes Clave' },
+            { id: 'stk3', name: 'Proveedores Críticos' },
+            { id: 'stk4', name: 'Medios de Comunicación' },
+            { id: 'stk5', name: 'Gobierno / Reguladores' },
+            { id: 'stk6', name: 'Accionistas / Inversores' },
+            { id: 'stk7', name: 'Comunidad Local' },
+            { id: 'stk8', name: 'Servicios de Emergencia' },
+        ];
+
+        const INITIAL_COMMAND_STRUCTURE = [
+            {
+                id: 'strat',
+                level: 'Estratégico (Oro)',
+                composition: 'CEO, Director Legal, Dir. Comunicación, Dir. RRHH',
+                responsibility: 'Definir la estrategia global, manejo de reputación, decisiones financieras mayores y vocería oficial.'
+            },
+            {
+                id: 'tac',
+                level: 'Táctico (Plata)',
+                composition: 'Gerentes de Área, Jefe de Continuidad de Negocio, Jefe de TI',
+                responsibility: 'Coordinar recursos, gestionar la logística de recuperación y traducir la estrategia en acciones concretas.'
+            },
+            {
+                id: 'ops',
+                level: 'Operacional (Bronce)',
+                composition: 'Brigadas de Emergencia, Soporte TI, Seguridad Física, Jefes de Turno',
+                responsibility: 'Ejecución inmediata de procedimientos, salvaguarda de vidas, contención física del incidente.'
+            }
+        ];
+
+        const CONTINUITY_PLANS = [
+            { id: 'erp', name: 'Plan de Respuesta a Emergencias (ERP)', desc: 'Salvaguarda de vidas y activos físicos inmediatos.' },
+            { id: 'cmp', name: 'Plan de Gestión de Crisis (CMP)', desc: 'Manejo estratégico, comunicación y toma de decisiones.' },
+            { id: 'bcp', name: 'Plan de Continuidad del Negocio (BCP)', desc: 'Recuperación de procesos críticos de negocio.' },
+            { id: 'drp', name: 'Plan de Recuperación de Desastres (DRP)', desc: 'Restauración de infraestructura TI y datos.' },
+            { id: 'comms', name: 'Plan de Comunicación de Crisis', desc: 'Gestión de mensajes a partes interesadas y prensa.' },
+        ];
+
+        // Plantilla basada en mejores prácticas (ISO 22301 / FEMA)
+        const STANDARD_RESPONSE_TEMPLATE = [
+            { time: '00:00', title: 'Detección del Incidente (Hora Cero)', desc: 'El incidente es detectado y reportado al punto de contacto central (Help Desk / Seguridad).', type: 'alert' },
+            { time: '00:15', title: 'Evaluación Inicial y Triaje', desc: 'Se determina la severidad. ¿Afecta la seguridad humana? ¿Afecta operaciones críticas?', type: 'action' },
+            { time: '00:30', title: 'Activación del Equipo de Gestión de Crisis (CMT)', desc: 'Convocatoria del nivel Estratégico y Táctico a la Sala de Crisis (Física o Virtual).', type: 'decision' },
+            { time: '01:00', title: 'Activación de Planes de Continuidad (BCP/DRP)', desc: 'Se ejecutan los procedimientos de recuperación definidos para el escenario específico.', type: 'action' },
+            { time: '01:30', title: 'Primera Comunicación a Partes Interesadas', desc: 'Envío de comunicado inicial de "Estamos enterados y trabajando" a empleados y clientes clave.', type: 'comms' },
+            { time: '02:00', title: 'Evaluación de Impacto en Curso', desc: 'Revisión de métricas vs RTO. ¿Se requiere sitio alterno? ¿Se requiere ayuda externa?', type: 'action' },
+        ];
+
+        // Banco de acciones rápidas para el usuario
+        const QUICK_ACTIONS = [
+            { title: 'Evacuar Instalaciones', desc: 'Activar alarmas y dirigir al personal a puntos de reunión.' },
+            { title: 'Comunicado de Prensa', desc: 'Redactar y difundir nota oficial a medios.' },
+            { title: 'Activar Sitio Alterno', desc: 'Traslado de operaciones críticas a sede de contingencia.' },
+            { title: 'Apagado de Sistemas', desc: 'Shutdown de emergencia para contener ciberataque.' },
+            { title: 'Contactar Servicios Emergencia', desc: 'Llamada a Bomberos/Policía/Ambulancia.' },
+        ];
+
+        // --- COMPONENTE PRINCIPAL ---
+
+        function App() {
+            // Pestañas
+            const [activeTab, setActiveTab] = useState('planning');
+
+            // Estado Planificación
+            const [assignments, setAssignments] = useState([]); 
+            const [commandStructure, setCommandStructure] = useState(INITIAL_COMMAND_STRUCTURE);
+            const [biaData, setBiaData] = useState(
+                INCIDENT_TYPES.reduce((acc, inc) => ({
+                ...acc,
+                [inc.id]: { rto: '4 horas', rpo: '1 hora', mtpd: '24 horas' } 
+                }), {})
+            );
+            const [selectedPlans, setSelectedPlans] = useState({});
+            const [spokespersonData, setSpokespersonData] = useState(
+                INCIDENT_TYPES.reduce((acc, inc) => ({
+                    ...acc,
+                    [inc.id]: { spokespersons: '', channels: '' }
+                }), {})
+            );
+
+            // Estado Simulacro
+            const [simScenarioId, setSimScenarioId] = useState('cyber');
+            const [timeline, setTimeline] = useState([{ id: 1, ...STANDARD_RESPONSE_TEMPLATE[0] }]);
+
+            // --- LÓGICA DE NEGOCIO ---
+
+            const getUsageCount = (typeId) => assignments.filter(a => a.typeId === typeId).length;
+            const getStakeholderName = (typeId) => STAKEHOLDER_DEFINITIONS.find(s => s.id === typeId)?.name || 'Desconocido';
+
+            // Drag & Drop
+            const onDragStartFromPool = (e, typeId) => {
+                e.dataTransfer.setData("typeId", typeId);
+                e.dataTransfer.setData("origin", "pool");
+            };
+            const onDragStartInstance = (e, instanceId) => {
+                e.dataTransfer.setData("instanceId", instanceId);
+                e.dataTransfer.setData("origin", "column");
+            };
+            const onDrop = (e, targetColumnId) => {
+                const origin = e.dataTransfer.getData("origin");
+                if (origin === "pool") {
+                    const typeId = e.dataTransfer.getData("typeId");
+                    if (getUsageCount(typeId) < 5) {
+                        setAssignments(prev => [...prev, {
+                            instanceId: `inst-${Date.now()}-${Math.random()}`,
+                            typeId: typeId,
+                            columnId: targetColumnId
+                        }]);
+                    }
+                } else if (origin === "column") {
+                    const instanceId = e.dataTransfer.getData("instanceId");
+                    setAssignments(prev => prev.map(a => 
+                        a.instanceId === instanceId ? { ...a, columnId: targetColumnId } : a
+                    ));
+                }
+            };
+            const onDragOver = (e) => e.preventDefault();
+            const removeInstance = (instanceId) => setAssignments(prev => prev.filter(a => a.instanceId !== instanceId));
+
+            // Handlers Genéricos
+            const handleCommandChange = (id, field, value) => {
+                setCommandStructure(prev => prev.map(row => row.id === id ? { ...row, [field]: value } : row));
+            };
+            const handleBiaChange = (incidentId, field, value) => {
+                setBiaData(prev => ({ ...prev, [incidentId]: { ...prev[incidentId], [field]: value } }));
+            };
+            const handlePlanToggle = (incidentId, planId) => {
+                setSelectedPlans(prev => {
+                    const current = prev[incidentId] || [];
+                    return { ...prev, [incidentId]: current.includes(planId) ? current.filter(p => p !== planId) : [...current, planId] };
+                });
+            };
+            const handleSpokespersonChange = (incidentId, field, value) => {
+                setSpokespersonData(prev => ({ ...prev, [incidentId]: { ...prev[incidentId], [field]: value } }));
+            };
+
+            // Handlers Simulacro
+            const addTimelineEvent = (templateEvent = null) => {
+                const newEvent = templateEvent ? { ...templateEvent, id: Date.now() + Math.random() } : {
+                    id: Date.now(),
+                    time: '00:00',
+                    title: 'Nueva Acción',
+                    desc: '',
+                    type: 'action'
+                };
+                setTimeline([...timeline, newEvent]);
+            };
+            const updateTimelineEvent = (id, field, value) => {
+                setTimeline(prev => prev.map(ev => ev.id === id ? { ...ev, [field]: value } : ev));
+            };
+            const removeTimelineEvent = (id) => setTimeline(prev => prev.filter(ev => ev.id !== id));
+            
+            const loadStandardTemplate = () => {
+                const templateWithIds = STANDARD_RESPONSE_TEMPLATE.map(ev => ({ ...ev, id: Date.now() + Math.random() }));
+                setTimeline(templateWithIds);
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 font-sans text-gray-800 pb-20">
+                    {/* Header */}
+                    <header className="bg-slate-900 text-white p-6 shadow-lg sticky top-0 z-50">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div>
+                                    <h1 className="text-3xl font-bold flex items-center gap-2">
+                                        <Shield className="h-8 w-8 text-red-500" />
+                                        Gestor Integral de Respuesta a Incidentes
+                                    </h1>
+                                    <p className="text-sm text-gray-400 mt-1">Basado en ISO 22301 y Mejores Prácticas de Gestión de Crisis | Arquitectura de Resiliencia Operacional</p>
+                                </div>
+                                <div className="flex gap-2 bg-slate-800 p-1 rounded-lg">
+                                    <button 
+                                        onClick={() => setActiveTab('planning')}
+                                        className={`px-4 py-2 rounded-md font-bold flex items-center gap-2 transition-all ${activeTab === 'planning' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        <Layout className="h-4 w-4" /> Planificación
+                                    </button>
+                                    <button 
+                                        onClick={() => setActiveTab('simulation')}
+                                        className={`px-4 py-2 rounded-md font-bold flex items-center gap-2 transition-all ${activeTab === 'simulation' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        <PlayCircle className="h-4 w-4" /> Simulacro
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-7xl mx-auto p-6">
+                        
+                        {/* --- PESTAÑA PLANIFICACIÓN --- */}
+                        {activeTab === 'planning' && (
+                            <div className="space-y-12 animate-in fade-in duration-300">
+                                
+                                {/* SECCIÓN 1: MAPEO DE INTERESADOS (Drag & Drop) */}
+                                <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                    <div className="flex items-center gap-3 mb-6 border-b pb-4 border-gray-100">
+                                        <div className="bg-blue-100 p-2 rounded-lg"><Users className="h-6 w-6 text-blue-600" /></div>
+                                        <div>
+                                            <h2 className="text-xl font-bold text-gray-800">Mapeo de Partes Interesadas</h2>
+                                            <p className="text-sm text-gray-500">Arrastre las tarjetas. Cada parte interesada puede usarse hasta <strong>5 veces</strong>.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                        {/* Pool */}
+                                        <div className="lg:col-span-3 bg-gray-50 p-4 rounded-lg border border-dashed border-gray-300 h-fit sticky top-24">
+                                            <h3 className="font-bold mb-4 text-gray-700 flex items-center gap-2 text-sm uppercase tracking-wide">
+                                                <Move className="h-4 w-4" /> Disponibles
+                                            </h3>
+                                            <div className="space-y-2">
+                                                {STAKEHOLDER_DEFINITIONS.map(def => {
+                                                    const usage = getUsageCount(def.id);
+                                                    const limitReached = usage >= 5;
+                                                    return (
+                                                        <div 
+                                                            key={def.id}
+                                                            draggable={!limitReached}
+                                                            onDragStart={(e) => !limitReached && onDragStartFromPool(e, def.id)}
+                                                            className={`p-3 rounded-lg border shadow-sm flex justify-between items-center transition-all group
+                                                                ${limitReached 
+                                                                    ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' 
+                                                                    : 'bg-white border-gray-200 hover:border-blue-400 cursor-grab active:cursor-grabbing hover:shadow-md'
+                                                                }`}
+                                                        >
+                                                            <span className="text-sm font-medium text-gray-700">{def.name}</span>
+                                                            <span className={`text-xs font-bold px-2 py-1 rounded-full ${limitReached ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                                {usage}/5
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Columnas */}
+                                        <div className="lg:col-span-9 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                            {INCIDENT_TYPES.map(incident => (
+                                                <div 
+                                                    key={incident.id} 
+                                                    className={`rounded-lg border flex flex-col bg-white transition-colors ${incident.color}`}
+                                                    onDragOver={onDragOver}
+                                                    onDrop={(e) => onDrop(e, incident.id)}
+                                                >
+                                                    <div className="p-3 font-bold text-sm text-center border-b border-inherit bg-white/50 h-14 flex items-center justify-center leading-tight rounded-t-lg">
+                                                        {incident.title}
+                                                    </div>
+                                                    <div className="p-2 flex-1 min-h-[200px] space-y-2">
+                                                        {assignments.filter(a => a.columnId === incident.id).map(a => (
+                                                            <div 
+                                                                key={a.instanceId}
+                                                                draggable
+                                                                onDragStart={(e) => onDragStartInstance(e, a.instanceId)}
+                                                                className="bg-white p-2 text-xs rounded border border-gray-200 shadow-sm flex justify-between items-center cursor-grab hover:border-blue-400 group animate-in zoom-in duration-200"
+                                                            >
+                                                                <span className="truncate flex-1">{getStakeholderName(a.typeId)}</span>
+                                                                <button 
+                                                                    onClick={() => removeInstance(a.instanceId)}
+                                                                    className="text-gray-300 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors"
+                                                                >
+                                                                    <X className="h-3 w-3" />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                        {assignments.filter(a => a.columnId === incident.id).length === 0 && (
+                                                            <div className="h-full flex items-center justify-center text-gray-300 text-xs italic p-4 border-2 border-dashed border-transparent rounded hover:border-gray-200 transition-colors">
+                                                                Arrastre aquí
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* SECCIÓN 2: ESTRUCTURA DE MANDO */}
+                                <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                    <div className="flex items-center gap-3 mb-6 border-b pb-4 border-gray-100">
+                                        <div className="bg-orange-100 p-2 rounded-lg"><AlertTriangle className="h-6 w-6 text-orange-600" /></div>
+                                        <div>
+                                            <h2 className="text-xl font-bold text-gray-800">Estructura de Mando Jerárquico</h2>
+                                            <p className="text-sm text-gray-500">Defina roles y responsabilidades por nivel.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full divide-y divide-gray-200 border rounded-lg">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase w-48">Nivel</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase w-1/3">Composición Típica</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Responsabilidad y Función</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {commandStructure.map((row) => (
+                                                    <tr key={row.id} className="hover:bg-gray-50">
+                                                        <td className="px-6 py-4 text-sm font-bold text-gray-800">{row.level}</td>
+                                                        <td className="px-6 py-4">
+                                                            <textarea 
+                                                                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border"
+                                                                rows={3}
+                                                                value={row.composition}
+                                                                onChange={(e) => handleCommandChange(row.id, 'composition', e.target.value)}
+                                                            />
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <textarea 
+                                                                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border"
+                                                                rows={3}
+                                                                value={row.responsibility}
+                                                                onChange={(e) => handleCommandChange(row.id, 'responsibility', e.target.value)}
+                                                            />
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </section>
+
+                                {/* SECCIÓN 3: MATRIZ BIA */}
+                                <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                    <div className="flex items-center gap-3 mb-6 border-b pb-4 border-gray-100">
+                                        <div className="bg-green-100 p-2 rounded-lg"><Clock className="h-6 w-6 text-green-600" /></div>
+                                        <div>
+                                            <h2 className="text-xl font-bold text-gray-800">Matriz BIA (Tiempos de Recuperación)</h2>
+                                            <p className="text-sm text-gray-500">Defina RTO, RPO y MTPD para cada escenario.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-12 gap-4 mb-2 px-4 py-2 bg-gray-50 rounded-t-lg border-b text-xs font-bold text-gray-500 uppercase">
+                                        <div className="col-span-3">Escenario</div>
+                                        <div className="col-span-3">RTO (Objetivo Tiempo)</div>
+                                        <div className="col-span-3">RPO (Objetivo Punto)</div>
+                                        <div className="col-span-3">MTPD (Máx. Tolerable)</div>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                        {INCIDENT_TYPES.map(inc => (
+                                            <div key={inc.id} className="grid grid-cols-12 gap-4 items-center p-2 hover:bg-gray-50 rounded transition-colors">
+                                                <div className="col-span-12 md:col-span-3 font-medium text-sm flex items-center gap-2">
+                                                    <span className={`w-2 h-2 rounded-full ${inc.color.split(' ')[0].replace('bg-', 'bg-opacity-100 bg-')}`}></span>
+                                                    {inc.title}
+                                                </div>
+                                                <div className="col-span-12 md:col-span-3">
+                                                    <input type="text" className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm p-2 border" 
+                                                        placeholder="Ej: 4 horas"
+                                                        value={biaData[inc.id].rto} onChange={(e) => handleBiaChange(inc.id, 'rto', e.target.value)} />
+                                                </div>
+                                                <div className="col-span-12 md:col-span-3">
+                                                    <input type="text" className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm p-2 border" 
+                                                        placeholder="Ej: 1 hora"
+                                                        value={biaData[inc.id].rpo} onChange={(e) => handleBiaChange(inc.id, 'rpo', e.target.value)} />
+                                                </div>
+                                                <div className="col-span-12 md:col-span-3">
+                                                    <input type="text" className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm p-2 border" 
+                                                        placeholder="Ej: 24 horas"
+                                                        value={biaData[inc.id].mtpd} onChange={(e) => handleBiaChange(inc.id, 'mtpd', e.target.value)} />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                {/* SECCIÓN 4: PLANES Y VOCEROS */}
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                                    
+                                    {/* PLANES */}
+                                    <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                        <div className="flex items-center gap-3 mb-6 border-b pb-4 border-gray-100">
+                                            <div className="bg-purple-100 p-2 rounded-lg"><FileText className="h-6 w-6 text-purple-600" /></div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-gray-800">Planes a Activar</h2>
+                                                <p className="text-sm text-gray-500">Seleccione los documentos requeridos.</p>
+                                            </div>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full">
+                                                <thead>
+                                                    <tr className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
+                                                        <th className="p-3 text-left">Escenario</th>
+                                                        {CONTINUITY_PLANS.map(p => <th key={p.id} className="p-3 text-center" title={p.name}>{p.id.toUpperCase()}</th>)}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="text-sm">
+                                                    {INCIDENT_TYPES.map(inc => (
+                                                        <tr key={inc.id} className="border-t hover:bg-gray-50">
+                                                            <td className="p-3 font-medium">{inc.title}</td>
+                                                            {CONTINUITY_PLANS.map(p => (
+                                                                <td key={p.id} className="p-3 text-center">
+                                                                    <input type="checkbox" 
+                                                                        className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                                                                        checked={selectedPlans[inc.id]?.includes(p.id)} onChange={() => handlePlanToggle(inc.id, p.id)} />
+                                                                </td>
+                                                            ))}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </section>
+
+                                    {/* VOCEROS (NUEVA) */}
+                                    <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                        <div className="flex items-center gap-3 mb-6 border-b pb-4 border-gray-100">
+                                            <div className="bg-pink-100 p-2 rounded-lg"><Megaphone className="h-6 w-6 text-pink-600" /></div>
+                                            <div>
+                                                <h2 className="text-xl font-bold text-gray-800">Matriz de Voceros</h2>
+                                                <p className="text-sm text-gray-500">Defina voceros y canales oficiales.</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2">
+                                            {INCIDENT_TYPES.map(inc => (
+                                                <div key={inc.id} className="p-4 border rounded-lg bg-gray-50">
+                                                    <div className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                                        <span className={`w-2 h-2 rounded-full ${inc.color.split(' ')[0].replace('bg-', 'bg-opacity-100 bg-')}`}></span>
+                                                        {inc.title}
+                                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Voceros Oficiales</label>
+                                                            <textarea 
+                                                                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm p-2 border"
+                                                                rows={2}
+                                                                placeholder="Ej: CEO, Dir. TI..."
+                                                                value={spokespersonData[inc.id].spokespersons}
+                                                                onChange={(e) => handleSpokespersonChange(inc.id, 'spokespersons', e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Medios Oficiales</label>
+                                                            <textarea 
+                                                                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm p-2 border"
+                                                                rows={2}
+                                                                placeholder="Ej: Nota de prensa, Twitter..."
+                                                                value={spokespersonData[inc.id].channels}
+                                                                onChange={(e) => handleSpokespersonChange(inc.id, 'channels', e.target.value)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                </div>
+
+                            </div>
+                        )}
+
+                        {/* --- PESTAÑA SIMULACRO --- */}
+                        {activeTab === 'simulation' && (
+                            <div className="animate-in slide-in-from-right duration-300 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Panel Izquierdo: Contexto */}
+                                <div className="lg:col-span-1 space-y-6">
+                                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                            <Activity className="h-5 w-5 text-blue-600" /> Configurar Escenario
+                                        </h3>
+                                        
+                                        <div className="mb-6">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Seleccione Incidente a Simular</label>
+                                            <select 
+                                                value={simScenarioId}
+                                                onChange={(e) => setSimScenarioId(e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                            >
+                                                {INCIDENT_TYPES.map(inc => (
+                                                    <option key={inc.id} value={inc.id}>{inc.title}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3 mb-6">
+                                            <h4 className="font-bold text-blue-800 text-xs uppercase tracking-wide border-b border-blue-200 pb-2 mb-2">Parámetros BIA Definidos</h4>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-600">RTO (Objetivo):</span>
+                                                <span className="font-mono font-bold text-blue-700 bg-white px-2 py-1 rounded border text-xs">{biaData[simScenarioId]?.rto || 'No definido'}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-600">RPO (Datos):</span>
+                                                <span className="font-mono font-bold text-blue-700 bg-white px-2 py-1 rounded border text-xs">{biaData[simScenarioId]?.rpo || 'No definido'}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-600">MTPD (Límite):</span>
+                                                <span className="font-mono font-bold text-red-700 bg-white px-2 py-1 rounded border border-red-200 text-xs">{biaData[simScenarioId]?.mtpd || 'No definido'}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h4 className="font-bold text-gray-700 text-sm mb-2">Partes Interesadas Afectadas:</h4>
+                                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 min-h-[60px]">
+                                                    {assignments.filter(a => a.columnId === simScenarioId).length > 0 ? (
+                                                        <ul className="space-y-1">
+                                                            {assignments.filter(a => a.columnId === simScenarioId).map(a => (
+                                                                <li key={a.instanceId} className="text-xs flex items-center gap-2 text-gray-700">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                                    {getStakeholderName(a.typeId)}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    ) : (
+                                                        <p className="text-xs text-gray-400 italic text-center">Sin asignaciones.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <h4 className="font-bold text-gray-700 text-sm mb-2">Planes a Activar:</h4>
+                                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 min-h-[60px]">
+                                                    {selectedPlans[simScenarioId] && selectedPlans[simScenarioId].length > 0 ? (
+                                                        <ul className="space-y-1">
+                                                            {selectedPlans[simScenarioId].map(planId => (
+                                                                <li key={planId} className="text-xs flex items-center gap-2 text-purple-700 font-medium">
+                                                                    <FileText className="w-3 h-3" />
+                                                                    {CONTINUITY_PLANS.find(p => p.id === planId)?.name}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    ) : (
+                                                        <p className="text-xs text-gray-400 italic text-center">No se han seleccionado planes.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 text-sm text-amber-800">
+                                        <strong>💡 Tip de Gestión:</strong> Utilice la línea de tiempo para registrar cada acción clave. Asegúrese de activar los planes listados arriba y contactar a los voceros definidos.
+                                    </div>
+                                </div>
+
+                                {/* Panel Derecho: Línea de Tiempo */}
+                                <div className="lg:col-span-2">
+                                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 min-h-[600px] flex flex-col">
+                                        <div className="flex justify-between items-center mb-6 border-b pb-4 flex-wrap gap-2">
+                                            <div>
+                                                <h3 className="text-xl font-bold text-gray-800">Cronología del Incidente</h3>
+                                                <p className="text-xs text-gray-500">Registre la evolución paso a paso.</p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    onClick={loadStandardTemplate}
+                                                    className="flex items-center gap-1 bg-white border border-blue-200 hover:bg-blue-50 text-blue-700 text-sm font-semibold py-2 px-4 rounded-lg transition-colors"
+                                                >
+                                                    <List className="h-4 w-4" /> Cargar Estándar
+                                                </button>
+                                                <button 
+                                                    onClick={() => addTimelineEvent()}
+                                                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded-lg transition-colors shadow-sm"
+                                                >
+                                                    <Plus className="h-4 w-4" /> Agregar Hito
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-4 flex flex-wrap gap-2">
+                                            {QUICK_ACTIONS.map((action, i) => (
+                                                <button 
+                                                    key={i}
+                                                    onClick={() => addTimelineEvent({ time: '00:00', title: action.title, desc: action.desc, type: 'action' })}
+                                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full transition-colors border border-gray-300 flex items-center gap-1"
+                                                >
+                                                    <Zap className="h-3 w-3 text-yellow-600" /> {action.title}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex-1 relative border-l-2 border-gray-200 ml-6 space-y-8 pb-10">
+                                            {timeline.map((event, index) => (
+                                                <div key={event.id} className="relative pl-8 group animate-in slide-in-from-bottom-2 duration-300">
+                                                    {/* Dot en la línea */}
+                                                    <div className={`absolute -left-[9px] top-6 w-4 h-4 rounded-full border-2 border-white shadow-sm z-10
+                                                        ${index === 0 ? 'bg-red-500 ring-4 ring-red-100' : 'bg-blue-500 group-hover:ring-4 group-hover:ring-blue-100 transition-all'}`}></div>
+                                                    
+                                                    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow group-hover:border-blue-300 relative">
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <div className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded">
+                                                                <Clock className="h-3 w-3 text-gray-500" />
+                                                                <input 
+                                                                    type="text" 
+                                                                    value={event.time}
+                                                                    onChange={(e) => updateTimelineEvent(event.id, 'time', e.target.value)}
+                                                                    className="bg-transparent font-mono font-bold text-blue-700 focus:outline-none w-16 text-sm text-center"
+                                                                    placeholder="00:00"
+                                                                />
+                                                            </div>
+                                                            <div className="flex gap-1">
+                                                                {index !== 0 && (
+                                                                    <button onClick={() => removeTimelineEvent(event.id)} className="text-gray-300 hover:text-red-500 transition-colors p-1">
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <input 
+                                                            type="text" 
+                                                            value={event.title}
+                                                            onChange={(e) => updateTimelineEvent(event.id, 'title', e.target.value)}
+                                                            className="block w-full font-bold text-gray-800 mb-2 bg-transparent border-b border-transparent hover:border-gray-200 focus:border-blue-500 focus:outline-none py-1 text-lg transition-all"
+                                                            placeholder="Título de la acción..."
+                                                        />
+                                                        
+                                                        <textarea 
+                                                            value={event.desc}
+                                                            onChange={(e) => updateTimelineEvent(event.id, 'desc', e.target.value)}
+                                                            className="block w-full text-sm text-gray-600 bg-gray-50 border-0 rounded-md p-2 focus:ring-2 focus:ring-blue-500 resize-none transition-all"
+                                                            rows={2}
+                                                            placeholder="Describa las acciones tomadas, responsables y protocolos activados..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            
+                                            {/* Botón fantasma */}
+                                            <div className="relative pl-8 opacity-40 hover:opacity-100 cursor-pointer transition-opacity pt-4 group" onClick={() => addTimelineEvent()}>
+                                                <div className="absolute -left-[5px] top-6 w-2 h-2 rounded-full bg-gray-300 group-hover:bg-blue-400 transition-colors"></div>
+                                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-sm text-gray-500 font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
+                                                    + Clic para añadir siguiente paso en la cronología
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                    </main>
+                </div>
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+<footer>
+    <h2 style="text-align: center; color: #555555; font-weight: bold;">
+    Material con fines didácticos elaborado por Julio Calderón. Derechos reservados 2025
+</h2>
+</footer>
+</html>
