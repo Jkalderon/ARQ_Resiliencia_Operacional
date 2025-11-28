@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multimedia - Resiliencia Operacional</title>
+    <!-- Tailwind CSS para estilos rápidos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Estilos personalizados para el reproductor de audio nativo */
+        audio::-webkit-media-controls-panel {
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Navbar / Encabezado -->
+    <header class="bg-blue-900 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">Resiliencia Operacional</h1>
+                <p class="text-blue-200 text-sm mt-1">Biblioteca Multimedia y Recursos de Audio</p>
+            </div>
+            <!-- Botón para volver al index.html -->
+            <a href="index.html" class="mt-4 md:mt-0 flex items-center gap-2 bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors duration-200">
+                <i data-lucide="home" class="w-4 h-4"></i>
+                <span>Volver al Inicio</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        
+        <div class="mb-8 border-b pb-4 border-slate-200">
+            <h2 class="text-xl font-semibold text-slate-700 flex items-center gap-2">
+                <i data-lucide="headphones" class="w-6 h-6 text-blue-600"></i>
+                Audios Disponibles
+            </h2>
+            <p class="text-slate-500 mt-2">Escucha o descarga el material didáctico relacionado a la arquitectura de resiliencia.</p>
+        </div>
+
+        <!-- Grid de Audios -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="audio-grid">
+            <!-- Los audios se generan aquí -->
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 py-6 mt-auto">
+        <div class="container mx-auto px-4 text-center text-sm">
+            <p>&copy; 2025 Arquitectura de Resiliencia Operacional. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Inicializar iconos
+        lucide.createIcons();
+
+        // Lista de archivos basada en tu captura de pantalla
+        // IMPORTANTE: Los nombres deben ser exactos.
+        const audioFiles = [
+            {
+                filename: "Audio-Marco ISO22301.mp3",
+                title: "Marco ISO 22301",
+                desc: "Estándar internacional para la gestión de la continuidad del negocio."
+            },
+            {
+                filename: "Audio-Marco NIST.mp3",
+                title: "Marco NIST",
+                desc: "Directrices del Instituto Nacional de Estándares y Tecnología."
+            },
+            {
+                filename: "Audio-Normativa DORA.mp3",
+                title: "Normativa DORA",
+                desc: "Digital Operational Resilience Act y sus implicaciones."
+            },
+            {
+                filename: "Audio-Resiliencia Operacional.mp3",
+                title: "Resiliencia Operacional",
+                desc: "Conceptos fundamentales y arquitectura base."
+            },
+            {
+                filename: "Audio-Un enfoque diferente fortalecerse mediante lo impredecible.mp3",
+                title: "Enfoque: Lo Impredecible",
+                desc: "Cómo fortalecerse mediante situaciones no planificadas."
+            },
+            {
+                filename: "Fallas_de_DRP_el_costo_real.mp3",
+                title: "Fallas de DRP: El Costo Real",
+                desc: "Análisis de impacto y costos de fallas en recuperación."
+            }
+        ];
+
+        const gridContainer = document.getElementById('audio-grid');
+        
+        // Ruta relativa a la carpeta Multimedia desde la raíz
+        const basePath = "Multimedia/";
+
+        audioFiles.forEach(file => {
+            // Codificamos el nombre del archivo para manejar espacios y caracteres especiales
+            const safeUrl = basePath + encodeURIComponent(file.filename);
+            
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col";
+            
+            card.innerHTML = `
+                <div class="p-5 flex-grow">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                            <i data-lucide="music" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded">MP3</span>
+                    </div>
+                    <h3 class="font-bold text-lg text-slate-800 mb-1 leading-tight">${file.title}</h3>
+                    <p class="text-sm text-slate-500 mb-4">${file.desc}</p>
+                </div>
+                
+                <div class="bg-slate-50 p-4 border-t border-slate-100">
+                    <audio controls class="w-full h-8 mb-3 opacity-90 hover:opacity-100 transition-opacity">
+                        <source src="${safeUrl}" type="audio/mpeg">
+                        Tu navegador no soporta el elemento de audio.
+                    </audio>
+                    
+                    <a href="${safeUrl}" download class="flex items-center justify-center w-full gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 py-2 rounded-lg transition-colors border border-blue-200 border-dashed">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        Descargar Audio
+                    </a>
+                </div>
+            `;
+            
+            gridContainer.appendChild(card);
+        });
+
+        // Reinicializar iconos para el contenido dinámico
+        lucide.createIcons();
+    </script>
+</body>
+</html>
