@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de Documentos</title>
+    <!-- Tailwind CSS para estilos rápidos y bonitos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Estilos personalizados para el scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        /* Altura calculada para el visor */
+        .viewer-height {
+            height: calc(100vh - 80px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-slate-800 overflow-hidden">
+
+    <!-- Encabezado -->
+    <header class="bg-white border-b border-gray-200 h-16 flex items-center px-6 shadow-sm z-10 relative">
+        <i data-lucide="folder-open" class="text-blue-600 mr-3 h-6 w-6"></i>
+        <h1 class="text-xl font-bold text-gray-800">Repositorio de Documentos</h1>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <div class="flex flex-col md:flex-row viewer-height">
+        
+        <!-- Panel Lateral (Lista de Archivos) -->
+        <aside class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col shadow-lg z-0">
+            <div class="p-4 border-b border-gray-100 bg-gray-50">
+                <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Archivos Disponibles</h2>
+                <p class="text-xs text-gray-400 mt-1">Selecciona un archivo para previsualizar</p>
+            </div>
+            
+            <!-- Aquí se inyectará la lista con JS -->
+            <div id="file-list" class="overflow-y-auto flex-1 p-2 space-y-1">
+                <!-- Los items se generan dinámicamente -->
+            </div>
+        </aside>
+
+        <!-- Área de Previsualización -->
+        <main class="flex-1 bg-gray-100 relative flex flex-col">
+            
+            <!-- Estado Vacío (cuando no hay archivo seleccionado) -->
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                <i data-lucide="file-text" class="h-24 w-24 mb-4 opacity-20"></i>
+                <p class="text-lg font-medium">Selecciona un documento para ver su contenido</p>
+            </div>
+
+            <!-- Iframe para el PDF -->
+            <iframe 
+                id="pdf-viewer" 
+                class="w-full h-full hidden shadow-inner" 
+                src="" 
+                type="application/pdf">
+            </iframe>
+            
+            <!-- Barra de estado del documento actual -->
+            <div id="status-bar" class="hidden bg-white border-t border-gray-200 px-4 py-2 text-sm text-gray-600 flex justify-between items-center">
+                <span id="current-file-name" class="font-medium">Nombre del archivo</span>
+                <a id="download-btn" href="#" download class="flex items-center text-blue-600 hover:text-blue-800 transition-colors">
+                    <i data-lucide="download" class="h-4 w-4 mr-1"></i> Descargar
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN ---
+        // Dado que JavaScript en el navegador no puede leer carpetas automáticamente por seguridad,
+        // debes listar tus archivos aquí. Asegúrate que los nombres coincidan EXACTAMENTE (incluyendo .pdf).
+        // Si el index.html está en la misma carpeta que los PDFs, solo pon el nombre del archivo.
+        const documentos = [
+            { nombre: "ISO 22301-2019.pdf", titulo: "Norma ISO 22301 Gestión de Continuidad del Negocio" },
+            { nombre: "ISO 31000-2018.PDF", titulo: "Norma ISO 31000 Gestión de Riesgos" },
+            { nombre: "ISO 31010-Adaptación Chile.pdf", titulo: "Norma ISO31010 Técnicas para la Evaluación de Riesgos" },
+            { nombre: "The NIST Cybersecurity Framework 2.0.pdf", titulo: "Estandar NIST Cybersecurity Framework 2.0" },
+            // Agrega más archivos aquí siguiendo el formato...
+        ];
+
+        // --- LÓGICA DE LA APLICACIÓN ---
+        
+        const fileListContainer = document.getElementById('file-list');
+        const pdfViewer = document.getElementById('pdf-viewer');
+        const emptyState = document.getElementById('empty-state');
+        const statusBar = document.getElementById('status-bar');
+        const currentFileNameLabel = document.getElementById('current-file-name');
+        const downloadBtn = document.getElementById('download-btn');
+        let activeItem = null;
+
+        // Inicializar iconos
+        lucide.createIcons();
+
+        // Función para cargar la lista
+        function renderList() {
+            fileListContainer.innerHTML = '';
+
+            documentos.forEach((doc, index) => {
+                const button = document.createElement('button');
+                button.className = `w-full text-left px-4 py-3 rounded-lg flex items-center transition-all duration-200 hover:bg-blue-50 group border border-transparent`;
+                
+                // HTML interno del botón
+                button.innerHTML = `
+                    <div class="bg-red-100 p-2 rounded-md text-red-600 mr-3 group-hover:bg-red-200 transition-colors">
+                        <i data-lucide="file" class="w-5 h-5"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="font-medium text-gray-700 truncate group-hover:text-blue-700">${doc.titulo}</p>
+                        <p class="text-xs text-gray-400 truncate">${doc.nombre}</p>
+                    </div>
+                `;
+
+                // Evento Click
+                button.addEventListener('click', () => loadDocument(doc, button));
+                
+                fileListContainer.appendChild(button);
+            });
+            
+            // Re-inicializar iconos para los nuevos elementos
+            lucide.createIcons();
+        }
+
+        // Función para mostrar el documento
+        function loadDocument(doc, buttonElement) {
+            // Actualizar estilos de selección
+            if (activeItem) {
+                activeItem.classList.remove('bg-blue-100', 'border-blue-200', 'shadow-sm');
+                activeItem.classList.add('hover:bg-blue-50', 'border-transparent');
+            }
+            
+            buttonElement.classList.remove('hover:bg-blue-50', 'border-transparent');
+            buttonElement.classList.add('bg-blue-100', 'border-blue-200', 'shadow-sm');
+            activeItem = buttonElement;
+
+            // Mostrar visor y ocultar estado vacío
+            emptyState.classList.add('hidden');
+            pdfViewer.classList.remove('hidden');
+            statusBar.classList.remove('hidden');
+            statusBar.classList.add('flex');
+
+            // Cargar PDF
+            // Nota: Si el archivo no existe, el navegador mostrará su propio error 404 dentro del iframe
+            pdfViewer.src = doc.nombre; 
+
+            // Actualizar barra de estado
+            currentFileNameLabel.textContent = doc.titulo;
+            downloadBtn.href = doc.nombre;
+        }
+
+        // Iniciar
+        renderList();
+
+    </script>
+</body>
+</html>
